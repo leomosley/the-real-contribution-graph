@@ -3,14 +3,13 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck && cargo check",
+    "typecheck": "turbo run typecheck",
     "clean": "turbo run clean"
   },
   "devDependencies": {

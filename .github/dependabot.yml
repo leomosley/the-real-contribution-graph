@@ -20,10 +20,3 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
-
-  # Terraform/OpenTofu (remove this block if the project has no infra/)
-  - package-ecosystem: "terraform"
-    directory: "/infra"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
