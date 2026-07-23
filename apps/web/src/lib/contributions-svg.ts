@@ -1,7 +1,8 @@
 import type { Contributions } from "./contributions";
 import { buildLayout } from "./contributions-layout";
+import { DEFAULT_THEME, paletteFor, type Theme } from "./themes";
 
-const LEVEL_COLORS = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"];
+const EMPTY_CELL = "#161b22";
 const CELL = 11;
 const PITCH = 14; // cell + gap
 const PAD_X = 16;
@@ -17,9 +18,14 @@ function errorSvg(message: string): string {
 </svg>`;
 }
 
-export function renderContributionsSvg(username: string, data: Contributions): string {
+export function renderContributionsSvg(
+  username: string,
+  data: Contributions,
+  theme: Theme = DEFAULT_THEME
+): string {
   if (data.days.length === 0) return errorSvg(`No data for ${username}`);
 
+  const colors = paletteFor(theme, EMPTY_CELL);
   const { cells, columns } = buildLayout(data.days);
   const width = PAD_X * 2 + columns * PITCH;
   const height = HEADER + 7 * PITCH + PAD_BOTTOM;
@@ -28,7 +34,7 @@ export function renderContributionsSvg(username: string, data: Contributions): s
     .map((cell) => {
       const x = PAD_X + cell.col * PITCH;
       const y = HEADER + cell.row * PITCH;
-      const fill = LEVEL_COLORS[cell.level] ?? LEVEL_COLORS[0];
+      const fill = colors[cell.level] ?? colors[0];
       const label = `${cell.count} contribution${cell.count === 1 ? "" : "s"} on ${cell.date}`;
       return `<rect x="${x}" y="${y}" width="${CELL}" height="${CELL}" rx="2" fill="${fill}"><title>${escapeXml(label)}</title></rect>`;
     })

@@ -1,12 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buildLayout } from "../lib/contributions-layout";
+import {
+  DEFAULT_THEME,
+  paletteFor,
+  resolveTheme,
+  THEMES,
+  type Palette,
+  type Theme,
+} from "../lib/themes";
 
 type Day = { date: string; level: number; count: number };
 type Contributions = { total: number; days: Day[] };
 type ApiError = { error: string; kind?: string };
 
-// Neutral empty cell to sit on the near-black canvas; GitHub greens above it.
-const LEVEL_COLORS = ["#1b1b1d", "#0e4429", "#006d32", "#26a641", "#39d353"];
+// Neutral empty cell to sit on the near-black canvas; theme ramp sits above it.
+const EMPTY_CELL = "#1b1b1d";
 
 const USERNAME_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
 
@@ -28,7 +36,7 @@ function messageForError(err: ApiError): string {
   }
 }
 
-function Grid({ days }: { days: Day[] }) {
+function Grid({ days, colors }: { days: Day[]; colors: Palette }) {
   const layout = useMemo(() => buildLayout(days), [days]);
 
   return (
@@ -50,7 +58,7 @@ function Grid({ days }: { days: Day[] }) {
           gridTemplateColumns: `repeat(${layout.columns}, 11px)`,
         }}
       >
-        {layout.cells.map((cell, i) => (
+        {layout.cells.map((cell) => (
           <div
             key={cell.date}
             title={`${cell.count} contribution${cell.count === 1 ? "" : "s"} on ${cell.date}`}
@@ -58,7 +66,7 @@ function Grid({ days }: { days: Day[] }) {
             style={{
               gridRowStart: cell.row + 1,
               gridColumnStart: cell.col + 1,
-              background: LEVEL_COLORS[cell.level] ?? LEVEL_COLORS[0],
+              background: colors[cell.level] ?? colors[0],
               animationDelay: `${Math.min(cell.col * 9, 650)}ms`,
             }}
           />
@@ -68,12 +76,12 @@ function Grid({ days }: { days: Day[] }) {
   );
 }
 
-function Legend() {
+function Legend({ colors }: { colors: Palette }) {
   return (
     <div className="mt-4 flex items-center gap-1.5 font-mono text-[10px] text-neutral-600">
       <span className="mr-0.5">Less</span>
-      {LEVEL_COLORS.map((c) => (
-        <span key={c} className="h-[11px] w-[11px] rounded-[2px]" style={{ background: c }} />
+      {colors.map((c, i) => (
+        <span key={i} className="h-[11px] w-[11px] rounded-[2px]" style={{ background: c }} />
       ))}
       <span className="ml-0.5">More</span>
     </div>
@@ -81,7 +89,7 @@ function Legend() {
 }
 
 // Muted stand-in grid: the locked, pre-reveal state.
-function PlaceholderGrid() {
+function PlaceholderGrid({ colors }: { colors: Palette }) {
   const cells = Array.from({ length: 371 }, (_, i) => (i * 2654435761) % 5);
   return (
     <div
@@ -97,9 +105,35 @@ function PlaceholderGrid() {
         <div
           key={i}
           className="h-[11px] w-[11px] rounded-[2px]"
-          style={{ background: LEVEL_COLORS[level] }}
+          style={{ background: colors[level] }}
         />
       ))}
+    </div>
+  );
+}
+
+// Swatch row for choosing the graph theme.
+function ThemePicker({ value, onChange }: { value: Theme; onChange: (theme: Theme) => void }) {
+  return (
+    <div className="flex items-center gap-2" role="radiogroup" aria-label="Graph theme">
+      {THEMES.map((theme) => {
+        const selected = theme.name === value.name;
+        return (
+          <button
+            key={theme.name}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            aria-label={theme.label}
+            title={theme.label}
+            onClick={() => onChange(theme)}
+            className={`h-6 w-6 rounded-[4px] border transition-all ${
+              selected ? "scale-110 border-white/60" : "border-white/10 hover:border-white/30"
+            }`}
+            style={{ background: theme.ramp[2] }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -125,15 +159,17 @@ function CopyIcon() {
 
 // Copy control: sits top-right above the graph. Nudges with a tooltip after 5s,
 // then opens a Link/Markdown chooser on click.
-function CopyMenu({ origin, username }: { origin: string; username: string }) {
+function CopyMenu({ origin, username, theme }: { origin: string; username: string; theme: Theme }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<null | "link" | "markdown">(null);
   const [showTip, setShowTip] = useState(false);
   const [hovered, setHovered] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const link = `${origin}/?u=${encodeURIComponent(username)}`;
-  const markdown = `![${username}'s real contributions](${origin}/${username}.svg)`;
+  const query = theme.name === DEFAULT_THEME.name ? "" : `?theme=${theme.name}`;
+  const linkQuery = theme.name === DEFAULT_THEME.name ? "" : `&theme=${theme.name}`;
+  const link = `${origin}/?u=${encodeURIComponent(username)}${linkQuery}`;
+  const markdown = `![${username}'s real contributions](${origin}/${username}.svg${query})`;
 
   useEffect(() => {
     const t = setTimeout(() => setShowTip(true), 5000);
@@ -210,10 +246,14 @@ function Result({
   data,
   searched,
   origin,
+  theme,
+  colors,
 }: {
   data: Contributions;
   searched: string;
   origin: string;
+  theme: Theme;
+  colors: Palette;
 }) {
   const width = useMemo(() => {
     const cols = buildLayout(data.days).columns;
@@ -231,12 +271,12 @@ function Result({
             <span className="text-sm text-neutral-500">contributions this year</span>
             <span className="font-mono text-xs text-neutral-600">· @{searched}</span>
           </div>
-          <CopyMenu key={searched} origin={origin} username={searched} />
+          <CopyMenu key={searched} origin={origin} username={searched} theme={theme} />
         </div>
         <div className="max-w-full overflow-x-auto pb-1">
-          <Grid days={data.days} />
+          <Grid days={data.days} colors={colors} />
         </div>
-        <Legend />
+        <Legend colors={colors} />
       </div>
     </div>
   );
@@ -248,10 +288,22 @@ export default function ContributionsApp() {
   const [searched, setSearched] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
 
   const trimmed = username.trim();
   const invalid = trimmed.length > 0 && !USERNAME_RE.test(trimmed);
   const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const colors = useMemo(() => paletteFor(theme, EMPTY_CELL), [theme]);
+
+  function chooseTheme(next: Theme) {
+    setTheme(next);
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (next.name === DEFAULT_THEME.name) params.delete("theme");
+    else params.set("theme", next.name);
+    const query = params.toString();
+    window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
+  }
 
   async function search(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -276,13 +328,18 @@ export default function ContributionsApp() {
     setData((await res.json()) as Contributions);
     setSearched(name);
     if (typeof window !== "undefined") {
-      window.history.replaceState(null, "", `?u=${encodeURIComponent(name)}`);
+      const params = new URLSearchParams(window.location.search);
+      params.set("u", name);
+      window.history.replaceState(null, "", `?${params.toString()}`);
     }
   }
 
-  // Deep link: /?u=<username> reveals on load, so results are shareable.
+  // Deep link: /?u=<username>&theme=<theme> reveals on load, so results are
+  // shareable with their chosen theme.
   useEffect(() => {
-    const param = new URLSearchParams(window.location.search).get("u")?.trim();
+    const params = new URLSearchParams(window.location.search);
+    setTheme(resolveTheme(params.get("theme")));
+    const param = params.get("u")?.trim();
     if (param && USERNAME_RE.test(param)) {
       setUsername(param);
       void reveal(param);
@@ -332,12 +389,14 @@ export default function ContributionsApp() {
           <div className="flex flex-col items-center">
             <div className="mb-6 h-9 w-48 rounded bg-white/5" />
             <div className="max-w-full overflow-x-auto pb-1">
-              <PlaceholderGrid />
+              <PlaceholderGrid colors={colors} />
             </div>
           </div>
         )}
 
-        {!error && !loading && data && <Result data={data} searched={searched} origin={origin} />}
+        {!error && !loading && data && (
+          <Result data={data} searched={searched} origin={origin} theme={theme} colors={colors} />
+        )}
 
         {!error && !loading && !data && (
           <div className="flex flex-col items-center">
@@ -345,10 +404,14 @@ export default function ContributionsApp() {
               Enter a username to reveal the real graph.
             </p>
             <div className="max-w-full overflow-x-auto pb-1">
-              <PlaceholderGrid />
+              <PlaceholderGrid colors={colors} />
             </div>
           </div>
         )}
+
+        <div className="mt-8">
+          <ThemePicker value={theme} onChange={chooseTheme} />
+        </div>
       </div>
     </div>
   );
