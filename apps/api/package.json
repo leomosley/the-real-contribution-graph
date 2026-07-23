@@ -1,0 +1,8 @@
+{
+  "name": "@leomosley/the-real-contributions-graph-api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cargo run"
+  }
+}
