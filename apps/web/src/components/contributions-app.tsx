@@ -42,6 +42,7 @@ function Heatmap({ days }: { days: Day[] }) {
 export default function ContributionsApp() {
   const [username, setUsername] = useState("");
   const [data, setData] = useState<Contributions | null>(null);
+  const [searched, setSearched] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -63,7 +64,10 @@ export default function ContributionsApp() {
       return;
     }
     setData(await res.json());
+    setSearched(name);
   }
+
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
 
   return (
     <div style={{ color: "#e6edf3", fontFamily: "system-ui, sans-serif" }}>
@@ -106,6 +110,23 @@ export default function ContributionsApp() {
           </p>
           <div style={{ overflowX: "auto" }}>
             <Heatmap days={data.days} />
+          </div>
+          <div style={{ marginTop: 24 }}>
+            <p style={{ color: "#8b949e", marginBottom: 6 }}>Embed in your README:</p>
+            <code
+              style={{
+                display: "block",
+                padding: "10px 12px",
+                borderRadius: 6,
+                border: "1px solid #30363d",
+                background: "#161b22",
+                color: "#e6edf3",
+                fontSize: 13,
+                overflowX: "auto",
+              }}
+            >
+              {`![contributions](${origin}/${searched}.svg)`}
+            </code>
           </div>
         </div>
       )}
