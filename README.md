@@ -1,4 +1,4 @@
-# the-real-contributions-graph
+# The Real Contribution Graph
 
 Providing visibility on the contributions for private orgs that GitHub chooses to somewhat randomly to show and hide.
 
