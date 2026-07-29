@@ -2,15 +2,36 @@
 import "../styles/global.css";
 import ContributionsApp from "../components/contributions-app";
 import { fetchStars } from "../lib/stars";
+import { isValidUsername } from "../lib/contributions";
+import { DEFAULT_THEME, resolveTheme } from "../lib/themes";
 
 const origin = Astro.url.origin;
 const repoSlug = "leomosley/the-real-contributions-graph";
 const repo = `https://github.com/${repoSlug}`;
 const stars = await fetchStars(repoSlug);
-const title = "The Real Contributions Graph";
-const description =
-  "See the GitHub contributions private orgs hide from your profile — the anonymous total recruiters and strangers can't normally see. Reveal any user's real graph and embed it in your README.";
-const ogImage = `${origin}/og.png`;
+
+// A shared profile is a deep link on this same page: /?u=<user>&theme=<theme>.
+// When one is present we swap in profile-specific metadata + a themed OG image
+// so the link unfurls as that user's real graph rather than the generic card.
+const params = Astro.url.searchParams;
+const profileUser = params.get("u")?.trim() ?? "";
+const theme = resolveTheme(params.get("theme"));
+const isProfile = isValidUsername(profileUser);
+const themeQuery = theme.name === DEFAULT_THEME.name ? "" : `?theme=${theme.name}`;
+
+const title = isProfile
+  ? `@${profileUser}'s real contributions · The Real Contributions Graph`
+  : "The Real Contributions Graph";
+const description = isProfile
+  ? `The GitHub contributions private orgs hide from @${profileUser}'s profile — the anonymous total recruiters and strangers can't normally see.`
+  : "See the GitHub contributions private orgs hide from your profile — the anonymous total recruiters and strangers can't normally see. Reveal any user's real graph and embed it in your README.";
+
+const canonical = isProfile
+  ? `${origin}/?u=${encodeURIComponent(profileUser)}${theme.name === DEFAULT_THEME.name ? "" : `&theme=${theme.name}`}`
+  : origin;
+const ogImage = isProfile
+  ? `${origin}/og/${encodeURIComponent(profileUser)}.png${themeQuery}`
+  : `${origin}/og.png`;
 ---
 
 <!doctype html>
@@ -22,12 +43,12 @@ const ogImage = `${origin}/og.png`;
 
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={origin} />
+    <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="theme-color" content="#0a0a0b" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={origin} />
+    <meta property="og:url" content={canonical} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImage} />
