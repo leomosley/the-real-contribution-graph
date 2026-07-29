@@ -15,7 +15,7 @@ export async function fetchStars(repo: string): Promise<number | null> {
   try {
     const res = await fetch(`https://api.github.com/repos/${repo}`, {
       headers: {
-        "User-Agent": "the-real-contributions-graph",
+        "User-Agent": "the-real-contribution-graph",
         Accept: "application/vnd.github+json",
       },
       signal: controller.signal,

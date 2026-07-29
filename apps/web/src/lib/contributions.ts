@@ -90,7 +90,7 @@ async function fetchGithub(username: string): Promise<Response | ContributionsEr
   try {
     // No token, no cookies: this is the anonymous/incognito view.
     return await fetch(url, {
-      headers: { "User-Agent": "the-real-contributions-graph" },
+      headers: { "User-Agent": "the-real-contribution-graph" },
       signal: controller.signal,
     });
   } catch (err) {

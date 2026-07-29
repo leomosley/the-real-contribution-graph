@@ -5,8 +5,16 @@ import { fetchStars } from "../lib/stars";
 import { isValidUsername } from "../lib/contributions";
 import { DEFAULT_THEME, resolveTheme } from "../lib/themes";
 
-const origin = Astro.url.origin;
-const repoSlug = "leomosley/the-real-contributions-graph";
+// Behind Vercel's proxy Astro.url.origin resolves to https://localhost, which
+// breaks absolute OG image/canonical URLs for crawlers (Discord, Twitter…).
+// Prefer the real host from forwarded headers (works on preview deploys too),
+// then the configured site, then the parsed origin for local dev.
+const forwardedHost = Astro.request.headers.get("x-forwarded-host");
+const forwardedProto = Astro.request.headers.get("x-forwarded-proto") ?? "https";
+const origin = forwardedHost
+  ? `${forwardedProto}://${forwardedHost}`
+  : (Astro.site?.origin ?? Astro.url.origin);
+const repoSlug = "leomosley/the-real-contribution-graph";
 const repo = `https://github.com/${repoSlug}`;
 const stars = await fetchStars(repoSlug);
 

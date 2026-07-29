@@ -3,8 +3,8 @@
 ## Setup
 
 ```sh
-git clone https://github.com/leomosley/the-real-contributions-graph.git
-cd the-real-contributions-graph
+git clone https://github.com/leomosley/the-real-contribution-graph.git
+cd the-real-contribution-graph
 bun install
 ```
 
