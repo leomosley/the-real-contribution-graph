@@ -28,8 +28,8 @@ const isProfile = isValidUsername(profileUser);
 const themeQuery = theme.name === DEFAULT_THEME.name ? "" : `?theme=${theme.name}`;
 
 const title = isProfile
-  ? `@${profileUser}'s real contributions · The Real Contributions Graph`
-  : "The Real Contributions Graph";
+  ? `@${profileUser}'s real contributions · The Real Contribution Graph`
+  : "The Real Contribution Graph";
 const description = isProfile
   ? `The GitHub contributions private orgs hide from @${profileUser}'s profile.`
   : "See the GitHub contributions private orgs hide from your profile. Reveal any user's real graph and embed it in your README.";

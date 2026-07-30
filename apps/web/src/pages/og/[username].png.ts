@@ -59,8 +59,8 @@ function card(children: ReturnType<typeof h>[]) {
 const label = () =>
   h(
     "div",
-    { style: { display: "flex", letterSpacing: 6, fontSize: 20, color: "#7d8590" } },
-    "THE REAL CONTRIBUTIONS GRAPH"
+    { style: { display: "flex", letterSpacing: 1, fontSize: 20, color: "#7d8590" } },
+    "The Real Contribution Graph"
   );
 
 // Grid gets its own full-width centered row so it reads as the hero element.
