@@ -31,8 +31,8 @@ const title = isProfile
   ? `@${profileUser}'s real contributions · The Real Contributions Graph`
   : "The Real Contributions Graph";
 const description = isProfile
-  ? `The GitHub contributions private orgs hide from @${profileUser}'s profile — the anonymous total recruiters and strangers can't normally see.`
-  : "See the GitHub contributions private orgs hide from your profile — the anonymous total recruiters and strangers can't normally see. Reveal any user's real graph and embed it in your README.";
+  ? `The GitHub contributions private orgs hide from @${profileUser}'s profile.`
+  : "See the GitHub contributions private orgs hide from your profile. Reveal any user's real graph and embed it in your README.";
 
 const canonical = isProfile
   ? `${origin}/?u=${encodeURIComponent(profileUser)}${theme.name === DEFAULT_THEME.name ? "" : `&theme=${theme.name}`}`

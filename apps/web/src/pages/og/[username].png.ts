@@ -10,8 +10,8 @@ export const prerender = false;
 
 // Empty cell sits a touch above the near-black canvas, echoing GitHub's grid.
 const EMPTY_CELL = "#161b22";
-const CELL = 14;
-const GAP = 4;
+const CELL = 16;
+const GAP = 3;
 
 // Themed grid built from the real day data, laid out weekday-major like GitHub.
 function grid(days: Day[], colors: Palette) {
@@ -45,8 +45,9 @@ function card(children: ReturnType<typeof h>[]) {
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
-        padding: "72px 80px",
+        justifyContent: "center",
+        gap: 56,
+        padding: "64px 80px",
         backgroundColor: "#0a0c10",
         fontFamily: "Space Grotesk",
       },
@@ -58,29 +59,44 @@ function card(children: ReturnType<typeof h>[]) {
 const label = () =>
   h(
     "div",
-    { style: { display: "flex", letterSpacing: 6, fontSize: 22, color: "#7d8590" } },
+    { style: { display: "flex", letterSpacing: 6, fontSize: 20, color: "#7d8590" } },
     "THE REAL CONTRIBUTIONS GRAPH"
+  );
+
+// Grid gets its own full-width centered row so it reads as the hero element.
+const gridRow = (days: Day[], colors: Palette) =>
+  h(
+    "div",
+    { style: { display: "flex", justifyContent: "center", width: "100%" } },
+    grid(days, colors)
   );
 
 // Fallback when the user is unknown or GitHub gives us nothing.
 function fallbackCard(username: string) {
   return card([
-    label(),
     h(
       "div",
-      { style: { display: "flex", flexDirection: "column" } },
+      { style: { display: "flex", flexDirection: "column", gap: 20 } },
+      label(),
       h(
         "div",
-        { style: { display: "flex", fontSize: 76, fontWeight: 700, color: "#e6edf3" } },
+        {
+          style: {
+            display: "flex",
+            fontSize: 92,
+            fontWeight: 700,
+            color: "#e6edf3",
+            lineHeight: 1,
+          },
+        },
         `@${username}`
       ),
       h(
         "div",
-        { style: { display: "flex", fontSize: 30, color: "#7d8590", marginTop: 12 } },
+        { style: { display: "flex", fontSize: 28, color: "#7d8590" } },
         "No public contributions to reveal."
       )
     ),
-    h("div", { style: { display: "flex" } }),
   ]);
 }
 
@@ -89,35 +105,35 @@ function profileCard(username: string, total: number, days: Day[], theme: Theme)
   const accent = theme.ramp[3];
 
   return card([
-    label(),
     h(
       "div",
-      { style: { display: "flex", flexDirection: "column" } },
+      { style: { display: "flex", flexDirection: "column", gap: 18 } },
+      label(),
       h(
         "div",
-        { style: { display: "flex", alignItems: "baseline", gap: 20 } },
-        h(
-          "div",
-          { style: { display: "flex", fontSize: 76, fontWeight: 700, color: "#e6edf3" } },
-          `@${username}`
-        )
+        {
+          style: {
+            display: "flex",
+            fontSize: 92,
+            fontWeight: 700,
+            color: "#e6edf3",
+            lineHeight: 1,
+          },
+        },
+        `@${username}`
       ),
       h(
         "div",
-        { style: { display: "flex", alignItems: "baseline", gap: 16, marginTop: 8 } },
+        { style: { display: "flex", alignItems: "baseline", gap: 12 } },
         h(
           "div",
-          { style: { display: "flex", fontSize: 52, fontWeight: 700, color: accent } },
+          { style: { display: "flex", fontSize: 44, fontWeight: 700, color: accent } },
           total.toLocaleString("en-US")
         ),
-        h(
-          "div",
-          { style: { display: "flex", fontSize: 30, color: "#7d8590" } },
-          "contributions GitHub hides."
-        )
+        h("div", { style: { display: "flex", fontSize: 28, color: "#7d8590" } }, "contributions")
       )
     ),
-    grid(days, colors),
+    gridRow(days, colors),
   ]);
 }
 

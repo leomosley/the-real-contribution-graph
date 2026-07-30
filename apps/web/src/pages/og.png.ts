@@ -49,7 +49,7 @@ export const GET: APIRoute = async () => {
     h(
       "div",
       { style: { display: "flex", letterSpacing: 6, fontSize: 22, color: "#7d8590" } },
-      "THE REAL CONTRIBUTIONS GRAPH"
+      "the-real-contribution-graph"
     ),
     h(
       "div",
