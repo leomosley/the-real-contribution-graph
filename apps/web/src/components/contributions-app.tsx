@@ -88,9 +88,42 @@ function Legend({ colors }: { colors: Palette }) {
   );
 }
 
+// Deterministic hash → [0,1). Keeps SSR and client render identical while
+// looking unstructured, unlike a plain modulo which draws visible diagonals.
+function hash01(n: number): number {
+  let h = (n ^ 0x9e3779b9) >>> 0;
+  h = Math.imul(h ^ (h >>> 15), 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+// Fake a heavy contributor's year: mostly-filled with weekend dips and streaky
+// clusters, biased toward the brighter end of the ramp.
+function placeholderLevel(i: number): number {
+  const dayOfWeek = i % 7;
+  const week = Math.floor(i / 7);
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+
+  // A slow wave across the weeks gives busy and quiet stretches.
+  const wave = 0.5 + 0.5 * Math.sin(week * 0.55 + hash01(week) * 2.5);
+  const noise = hash01(i * 7 + dayOfWeek);
+
+  // Occasional hot streaks: a handful of weeks light up near-max, mimicking a
+  // crunch or a burst of shipping.
+  const hot = hash01(week * 31 + 7) > 0.82 ? 0.45 : 0;
+
+  const intensity = wave * 0.55 + noise * 0.45 + hot + 0.2 - (isWeekend ? 0.24 : 0);
+
+  if (intensity < 0.15) return 0;
+  if (intensity < 0.42) return 1;
+  if (intensity < 0.66) return 2;
+  if (intensity < 0.88) return 3;
+  return 4;
+}
+
 // Muted stand-in grid: the locked, pre-reveal state.
 function PlaceholderGrid({ colors }: { colors: Palette }) {
-  const cells = Array.from({ length: 371 }, (_, i) => (i * 2654435761) % 5);
+  const cells = Array.from({ length: 371 }, (_, i) => placeholderLevel(i));
   return (
     <div
       className="grid gap-[3px] opacity-25"
