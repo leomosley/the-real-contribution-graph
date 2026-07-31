@@ -133,6 +133,7 @@ function placeholderLevel(i: number, reveal: number): number {
 // (right) versions. Drag it to reveal more or less.
 function PlaceholderGrid({ colors }: { colors: Palette }) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef(false);
   const [split, setSplit] = useState(0.42);
   const [dragging, setDragging] = useState(false);
 
@@ -176,16 +177,22 @@ function PlaceholderGrid({ colors }: { colors: Palette }) {
         aria-valuemax={100}
         aria-valuenow={Math.round(split * 100)}
         onPointerDown={(e) => {
+          draggingRef.current = true;
           setDragging(true);
           e.currentTarget.setPointerCapture(e.pointerId);
           setFromClientX(e.clientX);
         }}
         onPointerMove={(e) => {
-          if (dragging) setFromClientX(e.clientX);
+          if (draggingRef.current) setFromClientX(e.clientX);
         }}
         onPointerUp={(e) => {
+          draggingRef.current = false;
           setDragging(false);
           e.currentTarget.releasePointerCapture(e.pointerId);
+        }}
+        onPointerCancel={() => {
+          draggingRef.current = false;
+          setDragging(false);
         }}
         onKeyDown={(e) => {
           if (e.key === "ArrowLeft") nudge(-1);
@@ -383,8 +390,8 @@ function Result({
   }, [data.days]);
 
   return (
-    <div className="flex w-full flex-col items-center">
-      <div style={{ width }} className="max-w-full">
+    <div className="flex w-full min-w-0 flex-col items-center">
+      <div style={{ width }} className="min-w-0 max-w-full">
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
             <span className="font-mono text-xl font-medium tracking-tight text-white tabular-nums">
@@ -395,10 +402,58 @@ function Result({
           </div>
           <CopyMenu key={searched} origin={origin} username={searched} theme={theme} />
         </div>
-        <div className="max-w-full overflow-x-auto pb-1">
+        <div className="min-w-0 max-w-full overflow-x-auto pb-1">
           <Grid days={data.days} colors={colors} />
         </div>
         <Legend colors={colors} />
+      </div>
+    </div>
+  );
+}
+
+// Loading placeholder that mirrors Result's layout — stats row, grid, legend at
+// the same width — so the graph doesn't jump when real data arrives.
+function ResultSkeleton() {
+  const width = PLACEHOLDER_COLUMNS * 14 - 3;
+  const bar = "rounded bg-white/[0.06]";
+  const cell = "h-[11px] w-[11px] rounded-[2px] bg-white/[0.05]";
+
+  return (
+    <div className="flex w-full min-w-0 flex-col items-center">
+      <div
+        style={{ width }}
+        className="min-w-0 max-w-full animate-pulse motion-reduce:animate-none"
+      >
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div className={`h-7 w-44 max-w-[60%] ${bar}`} />
+          <div className={`h-[30px] w-[74px] shrink-0 ${bar}`} />
+        </div>
+        <div className="min-w-0 max-w-full overflow-x-auto pb-1">
+          <div className="mb-1.5 flex gap-8">
+            {Array.from({ length: 7 }, (_, i) => (
+              <div key={i} className="h-2.5 w-6 rounded bg-white/[0.05]" />
+            ))}
+          </div>
+          <div
+            className="grid gap-[3px]"
+            style={{
+              gridTemplateRows: "repeat(7, 11px)",
+              gridAutoFlow: "column",
+              gridAutoColumns: "11px",
+            }}
+          >
+            {Array.from({ length: PLACEHOLDER_COLUMNS * 7 }, (_, i) => (
+              <div key={i} className={cell} />
+            ))}
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-1.5">
+          <div className={`h-2.5 w-7 ${bar}`} />
+          {Array.from({ length: 5 }, (_, i) => (
+            <div key={i} className="h-[11px] w-[11px] rounded-[2px] bg-white/[0.06]" />
+          ))}
+          <div className={`h-2.5 w-8 ${bar}`} />
+        </div>
       </div>
     </div>
   );
@@ -507,25 +562,18 @@ export default function ContributionsApp() {
       <div className="mt-14 flex flex-col items-center">
         {error && <p className="font-mono text-sm text-red-400/90">{error}</p>}
 
-        {!error && loading && (
-          <div className="flex flex-col items-center">
-            <div className="mb-6 h-9 w-48 rounded bg-white/5" />
-            <div className="max-w-full overflow-x-auto pb-1">
-              <PlaceholderGrid colors={colors} />
-            </div>
-          </div>
-        )}
+        {!error && loading && <ResultSkeleton />}
 
         {!error && !loading && data && (
           <Result data={data} searched={searched} origin={origin} theme={theme} colors={colors} />
         )}
 
         {!error && !loading && !data && (
-          <div className="flex flex-col items-center">
+          <div className="flex w-full min-w-0 flex-col items-center">
             <p className="mb-6 font-mono text-sm text-neutral-600">
               Enter a username to reveal the real graph.
             </p>
-            <div className="max-w-full overflow-x-auto pb-1">
+            <div className="min-w-0 max-w-full overflow-x-auto pb-1">
               <PlaceholderGrid colors={colors} />
             </div>
           </div>
