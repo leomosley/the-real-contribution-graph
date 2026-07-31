@@ -97,9 +97,15 @@ function hash01(n: number): number {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-// Fake a heavy contributor's year: mostly-filled with weekend dips and streaky
-// clusters, biased toward the brighter end of the ramp.
-function placeholderLevel(i: number): number {
+const PLACEHOLDER_COLUMNS = 53;
+// How suppressed the "before" (public) side is. Near-zero leaves only a few
+// faint cells; the "after" side runs at full signal.
+const BEFORE_REVEAL = 0.16;
+
+// One cell's brightness at a given reveal strength. `reveal` scales the whole
+// signal, so the same field can render as a near-empty public year or the dense
+// real graph just by dialling it down or up.
+function placeholderLevel(i: number, reveal: number): number {
   const dayOfWeek = i % 7;
   const week = Math.floor(i / 7);
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
@@ -112,7 +118,8 @@ function placeholderLevel(i: number): number {
   // crunch or a burst of shipping.
   const hot = hash01(week * 31 + 7) > 0.82 ? 0.45 : 0;
 
-  const intensity = wave * 0.55 + noise * 0.45 + hot + 0.2 - (isWeekend ? 0.24 : 0);
+  const base = wave * 0.55 + noise * 0.45 + hot + 0.2 - (isWeekend ? 0.24 : 0);
+  const intensity = base * reveal;
 
   if (intensity < 0.15) return 0;
   if (intensity < 0.42) return 1;
@@ -121,26 +128,108 @@ function placeholderLevel(i: number): number {
   return 4;
 }
 
-// Muted stand-in grid: the locked, pre-reveal state.
+// Draggable before/after grid: each cell is precomputed at both reveal
+// strengths, and a handle wipes the boundary between the public (left) and real
+// (right) versions. Drag it to reveal more or less.
 function PlaceholderGrid({ colors }: { colors: Palette }) {
-  const cells = Array.from({ length: 371 }, (_, i) => placeholderLevel(i));
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [split, setSplit] = useState(0.42);
+  const [dragging, setDragging] = useState(false);
+
+  const levels = useMemo(
+    () =>
+      Array.from({ length: 371 }, (_, i) => ({
+        before: placeholderLevel(i, BEFORE_REVEAL),
+        after: placeholderLevel(i, 1),
+      })),
+    []
+  );
+
+  const boundaryCol = Math.round(split * PLACEHOLDER_COLUMNS);
+  const handlePercent = (boundaryCol / PLACEHOLDER_COLUMNS) * 100;
+
+  function setFromClientX(clientX: number) {
+    const el = trackRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const fraction = (clientX - rect.left) / rect.width;
+    setSplit(Math.min(1, Math.max(0, fraction)));
+  }
+
+  function nudge(step: number) {
+    setSplit((s) => Math.min(1, Math.max(0, s + step / PLACEHOLDER_COLUMNS)));
+  }
+
   return (
-    <div
-      className="grid gap-[3px] opacity-25"
-      style={{
-        gridTemplateRows: "repeat(7, 11px)",
-        gridAutoFlow: "column",
-        gridAutoColumns: "11px",
-      }}
-      aria-hidden="true"
-    >
-      {cells.map((level, i) => (
+    <div className="inline-block select-none">
+      <div className="mb-2 flex justify-between font-mono text-[10px] tracking-wide text-neutral-600">
+        <span>What GitHub shows</span>
+        <span className="text-accent/70">Your real graph</span>
+      </div>
+
+      <div
+        ref={trackRef}
+        role="slider"
+        tabIndex={0}
+        aria-label="Drag to reveal hidden contributions"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(split * 100)}
+        onPointerDown={(e) => {
+          setDragging(true);
+          e.currentTarget.setPointerCapture(e.pointerId);
+          setFromClientX(e.clientX);
+        }}
+        onPointerMove={(e) => {
+          if (dragging) setFromClientX(e.clientX);
+        }}
+        onPointerUp={(e) => {
+          setDragging(false);
+          e.currentTarget.releasePointerCapture(e.pointerId);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowLeft") nudge(-1);
+          if (e.key === "ArrowRight") nudge(1);
+        }}
+        className="relative cursor-ew-resize touch-none rounded-sm outline-none focus-visible:ring-1 focus-visible:ring-white/20"
+      >
         <div
-          key={i}
-          className="h-[11px] w-[11px] rounded-[2px]"
-          style={{ background: colors[level] }}
-        />
-      ))}
+          className="grid gap-[3px]"
+          style={{
+            gridTemplateRows: "repeat(7, 11px)",
+            gridAutoFlow: "column",
+            gridAutoColumns: "11px",
+          }}
+        >
+          {levels.map((cell, i) => {
+            const revealed = Math.floor(i / 7) >= boundaryCol;
+            const level = revealed ? cell.after : cell.before;
+            return (
+              <div
+                key={i}
+                className="h-[11px] w-[11px] rounded-[2px] transition-[background-color] duration-150"
+                style={{ background: colors[level], opacity: level === 0 ? 0.4 : 0.9 }}
+              />
+            );
+          })}
+        </div>
+
+        <div
+          className="pointer-events-none absolute top-0 bottom-0 -translate-x-1/2"
+          style={{ left: `${handlePercent}%` }}
+        >
+          <div className="mx-auto h-full w-px bg-white/40" />
+          <div
+            className={`absolute top-1/2 left-1/2 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-neutral-900/90 text-neutral-300 shadow-lg shadow-black/40 backdrop-blur-md transition-transform ${
+              dragging ? "scale-110" : ""
+            }`}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M9 6l-4 6 4 6zM15 6l4 6-4 6z" />
+            </svg>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
