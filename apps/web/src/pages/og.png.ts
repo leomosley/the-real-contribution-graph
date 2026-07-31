@@ -70,7 +70,7 @@ export const GET: APIRoute = async () => {
     h(
       "div",
       { style: { display: "flex", letterSpacing: 6, fontSize: 22, color: "#7d8590" } },
-      "the-real-contribution-graph"
+      "The Real Contribution Graph"
     ),
     h(
       "div",
@@ -94,7 +94,7 @@ export const GET: APIRoute = async () => {
       h(
         "div",
         { style: { display: "flex", fontSize: 26, color: "#7d8590" } },
-        "The anonymous view recruiters can't normally see."
+        "The private contributions that GitHub hides."
       )
     )
   );
