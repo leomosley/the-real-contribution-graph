@@ -4,7 +4,7 @@ import { DEFAULT_THEME, paletteFor, type Theme } from "./themes";
 
 const EMPTY_CELL = "#161b22";
 const CELL = 11;
-const PITCH = 14; // cell + gap
+const PITCH = 14;
 const PAD_X = 16;
 const HEADER = 34;
 const PAD_BOTTOM = 12;
@@ -23,7 +23,9 @@ export function renderContributionsSvg(
   data: Contributions,
   theme: Theme = DEFAULT_THEME
 ): string {
-  if (data.days.length === 0) return errorSvg(`No data for ${username}`);
+  if (data.days.length === 0) {
+    return errorSvg(`No data for ${username}`);
+  }
 
   const colors = paletteFor(theme, EMPTY_CELL);
   const { cells, columns } = buildLayout(data.days);

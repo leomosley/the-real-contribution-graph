@@ -8,12 +8,11 @@ import { paletteFor, resolveTheme, type Palette, type Theme } from "../../lib/th
 
 export const prerender = false;
 
-// Empty cell sits a touch above the near-black canvas, echoing GitHub's grid.
 const EMPTY_CELL = "#161b22";
 const CELL = 16;
 const GAP = 3;
 
-// Themed grid built from the real day data, laid out weekday-major like GitHub.
+// Themed grid built from the real day data, laid out weekday-major.
 function grid(days: Day[], colors: Palette) {
   const { cells, columns } = buildLayout(days);
   const byPos = new Map(cells.map((c) => [`${c.col}:${c.row}`, c]));
@@ -63,7 +62,6 @@ const label = () =>
     "The Real Contribution Graph"
   );
 
-// Grid gets its own full-width centered row so it reads as the hero element.
 const gridRow = (days: Day[], colors: Palette) =>
   h(
     "div",

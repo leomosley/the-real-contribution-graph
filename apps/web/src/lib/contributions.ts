@@ -1,7 +1,6 @@
-// The entire backend: a cookieless GET to GitHub's undocumented contributions
-// fragment + an HTML parse. Runs server-side. The trick is deliberately NOT
-// authenticating — auth is what strips the data down to what GitHub chooses to
-// show. This is the anonymous/incognito aggregate.
+// Scrapes GitHub's public contributions fragment. Deliberately unauthenticated:
+// auth is what strips the graph down to what GitHub chooses to show, so the
+// anonymous view is the real aggregate.
 
 import { createTtlCache } from "./cache";
 
@@ -70,7 +69,10 @@ export function parseContributions(html: string): Contributions {
   for (const [tag] of html.matchAll(DAY_RE)) {
     const date = attr(tag, "data-date");
     const id = attr(tag, "id");
-    if (!date || !id) continue; // padding cells have no data-date
+    // Padding cells have no data-date.
+    if (!date || !id) {
+      continue;
+    }
     days.push({
       date,
       level: Number.parseInt(attr(tag, "data-level") ?? "0", 10) || 0,
@@ -88,7 +90,6 @@ async function fetchGithub(username: string): Promise<Response | ContributionsEr
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
-    // No token, no cookies: this is the anonymous/incognito view.
     return await fetch(url, {
       headers: { "User-Agent": "the-real-contribution-graph" },
       signal: controller.signal,
@@ -104,22 +105,33 @@ async function fetchGithub(username: string): Promise<Response | ContributionsEr
 }
 
 function mapStatusError(status: number): ContributionsError {
-  if (status === 404) return { error: "user not found", kind: "not_found" };
-  if (status === 429)
+  if (status === 404) {
+    return { error: "user not found", kind: "not_found" };
+  }
+  if (status === 429) {
     return { error: "github rate limited us, try again soon", kind: "rate_limited" };
+  }
   return { error: `github responded ${status}`, kind: "github_error" };
 }
 
 export async function fetchContributions(username: string): Promise<ContributionsResult> {
-  if (!isValidUsername(username)) return { error: "invalid username", kind: "invalid_username" };
+  if (!isValidUsername(username)) {
+    return { error: "invalid username", kind: "invalid_username" };
+  }
 
   const key = username.toLowerCase();
   const cached = cache.get(key);
-  if (cached) return cached;
+  if (cached) {
+    return cached;
+  }
 
   const res = await fetchGithub(username);
-  if ("error" in res) return res;
-  if (!res.ok) return mapStatusError(res.status);
+  if ("error" in res) {
+    return res;
+  }
+  if (!res.ok) {
+    return mapStatusError(res.status);
+  }
 
   const parsed = parseContributions(await res.text());
   cache.set(key, parsed);

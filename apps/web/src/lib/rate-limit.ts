@@ -1,6 +1,5 @@
-// Fixed-window per-key rate limiter. In-memory and per-instance, so it is a
-// coarse abuse guard rather than a strict global quota. Good enough to keep a
-// single client from hammering the GitHub scrape.
+// Fixed-window per-key rate limiter. In-memory and per-instance — a coarse
+// abuse guard, not a strict global quota.
 
 type Window = { count: number; resetAt: number };
 

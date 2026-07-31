@@ -5,10 +5,8 @@ import { fetchStars } from "../lib/stars";
 import { isValidUsername } from "../lib/contributions";
 import { DEFAULT_THEME, resolveTheme } from "../lib/themes";
 
-// Behind Vercel's proxy Astro.url.origin resolves to https://localhost, which
-// breaks absolute OG image/canonical URLs for crawlers (Discord, Twitter…).
-// Prefer the real host from forwarded headers (works on preview deploys too),
-// then the configured site, then the parsed origin for local dev.
+// Behind Vercel's proxy Astro.url.origin resolves to https://localhost, breaking
+// absolute OG/canonical URLs. Prefer the forwarded host, then site, then origin.
 const forwardedHost = Astro.request.headers.get("x-forwarded-host");
 const forwardedProto = Astro.request.headers.get("x-forwarded-proto") ?? "https";
 const origin = forwardedHost
@@ -19,8 +17,7 @@ const repo = `https://github.com/${repoSlug}`;
 const stars = await fetchStars(repoSlug);
 
 // A shared profile is a deep link on this same page: /?u=<user>&theme=<theme>.
-// When one is present we swap in profile-specific metadata + a themed OG image
-// so the link unfurls as that user's real graph rather than the generic card.
+// When present we swap in profile-specific metadata + a themed OG image.
 const params = Astro.url.searchParams;
 const profileUser = params.get("u")?.trim() ?? "";
 const theme = resolveTheme(params.get("theme"));
@@ -34,8 +31,9 @@ const description = isProfile
   ? `The GitHub contributions private orgs hide from @${profileUser}'s profile.`
   : "See the GitHub contributions private orgs hide from your profile. Reveal any user's real graph and embed it in your README.";
 
+const themeParam = theme.name === DEFAULT_THEME.name ? "" : `&theme=${theme.name}`;
 const canonical = isProfile
-  ? `${origin}/?u=${encodeURIComponent(profileUser)}${theme.name === DEFAULT_THEME.name ? "" : `&theme=${theme.name}`}`
+  ? `${origin}/?u=${encodeURIComponent(profileUser)}${themeParam}`
   : origin;
 const ogImage = isProfile
   ? `${origin}/og/${encodeURIComponent(profileUser)}.png${themeQuery}`

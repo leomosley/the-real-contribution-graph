@@ -1,7 +1,6 @@
 import { createRateLimiter } from "./rate-limit";
 
-// Shared across routes within an instance so one client can't dodge the limit
-// by switching endpoints. Coarse by design (see rate-limit.ts).
+// Shared across routes so one client can't dodge the limit by switching endpoints.
 export const limiter = createRateLimiter(60, 60_000);
 
 export function rateLimitHeaders(remaining: number, resetAt: number): Record<string, string> {

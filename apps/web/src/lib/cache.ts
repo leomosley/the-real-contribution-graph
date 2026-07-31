@@ -1,6 +1,4 @@
-// In-memory TTL cache. Scoped to a single warm serverless/edge instance, so it
-// is a best-effort latency win — not a source of truth. Falls back to a fresh
-// fetch on any miss, which is always correct.
+// Best-effort in-memory TTL cache, scoped to a single warm instance.
 
 type Entry<T> = { value: T; expiresAt: number };
 
@@ -14,7 +12,9 @@ export function createTtlCache<T>(ttlMs: number, maxEntries = 500): TtlCache<T> 
 
   const get = (key: string): T | undefined => {
     const entry = store.get(key);
-    if (!entry) return undefined;
+    if (!entry) {
+      return undefined;
+    }
     if (entry.expiresAt <= Date.now()) {
       store.delete(key);
       return undefined;
@@ -23,10 +23,11 @@ export function createTtlCache<T>(ttlMs: number, maxEntries = 500): TtlCache<T> 
   };
 
   const set = (key: string, value: T): void => {
-    // Bound memory: evict the oldest insertion when full.
     if (store.size >= maxEntries) {
       const oldest = store.keys().next().value;
-      if (oldest !== undefined) store.delete(oldest);
+      if (oldest !== undefined) {
+        store.delete(oldest);
+      }
     }
     store.set(key, { value, expiresAt: Date.now() + ttlMs });
   };

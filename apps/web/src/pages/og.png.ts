@@ -11,7 +11,7 @@ const cell = (color: string) =>
   h("div", { style: { width: 15, height: 15, borderRadius: 3, backgroundColor: color } });
 
 // Deterministic hash → [0,1). Matches the site's placeholder so the OG band
-// reads as the same organic, non-repeating field rather than diagonals.
+// reads as the same organic field.
 function hash01(n: number): number {
   let x = (n ^ 0x9e3779b9) >>> 0;
   x = Math.imul(x ^ (x >>> 15), 0x85ebca6b) >>> 0;
@@ -19,8 +19,7 @@ function hash01(n: number): number {
   return ((x ^ (x >>> 16)) >>> 0) / 4294967296;
 }
 
-// Fake a heavy contributor: mostly-filled with weekend dips and hot streaks,
-// biased toward the brighter end of the ramp.
+// Fake a heavy contributor: weekend dips and hot streaks, biased bright.
 function bandLevel(col: number, row: number): number {
   const isWeekend = row === 0 || row === 6;
   const wave = 0.5 + 0.5 * Math.sin(col * 0.55 + hash01(col) * 2.5);
@@ -28,10 +27,18 @@ function bandLevel(col: number, row: number): number {
   const hot = hash01(col * 31 + 7) > 0.82 ? 0.45 : 0;
   const intensity = wave * 0.55 + noise * 0.45 + hot + 0.2 - (isWeekend ? 0.24 : 0);
 
-  if (intensity < 0.15) return 0;
-  if (intensity < 0.42) return 1;
-  if (intensity < 0.66) return 2;
-  if (intensity < 0.88) return 3;
+  if (intensity < 0.15) {
+    return 0;
+  }
+  if (intensity < 0.42) {
+    return 1;
+  }
+  if (intensity < 0.66) {
+    return 2;
+  }
+  if (intensity < 0.88) {
+    return 3;
+  }
   return 4;
 }
 

@@ -1,13 +1,14 @@
 import { createTtlCache } from "./cache";
 
-// Star count for the header pill. Cached for an hour and best-effort: any
-// failure returns null so the header simply omits the number.
+// Star count for the header pill. Best-effort: any failure returns null.
 
 const cache = createTtlCache<number>(60 * 60 * 1000, 4);
 
 export async function fetchStars(repo: string): Promise<number | null> {
   const cached = cache.get(repo);
-  if (cached !== undefined) return cached;
+  if (cached !== undefined) {
+    return cached;
+  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 3000);
@@ -20,11 +21,15 @@ export async function fetchStars(repo: string): Promise<number | null> {
       },
       signal: controller.signal,
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      return null;
+    }
 
     const body = (await res.json()) as { stargazers_count?: number };
     const stars = typeof body.stargazers_count === "number" ? body.stargazers_count : null;
-    if (stars !== null) cache.set(repo, stars);
+    if (stars !== null) {
+      cache.set(repo, stars);
+    }
     return stars;
   } catch {
     return null;

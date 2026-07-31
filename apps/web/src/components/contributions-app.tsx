@@ -13,7 +13,6 @@ type Day = { date: string; level: number; count: number };
 type Contributions = { total: number; days: Day[] };
 type ApiError = { error: string; kind?: string };
 
-// Neutral empty cell to sit on the near-black canvas; theme ramp sits above it.
 const EMPTY_CELL = "#1b1b1d";
 
 const USERNAME_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
@@ -98,39 +97,41 @@ function hash01(n: number): number {
 }
 
 const PLACEHOLDER_COLUMNS = 53;
-// How suppressed the "before" (public) side is. Near-zero leaves only a few
-// faint cells; the "after" side runs at full signal.
+// How suppressed the public "before" side is; the "after" side runs at full signal.
 const BEFORE_REVEAL = 0.16;
 
 // One cell's brightness at a given reveal strength. `reveal` scales the whole
-// signal, so the same field can render as a near-empty public year or the dense
+// signal, so the same field renders as a near-empty public year or the dense
 // real graph just by dialling it down or up.
 function placeholderLevel(i: number, reveal: number): number {
   const dayOfWeek = i % 7;
   const week = Math.floor(i / 7);
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-  // A slow wave across the weeks gives busy and quiet stretches.
   const wave = 0.5 + 0.5 * Math.sin(week * 0.55 + hash01(week) * 2.5);
   const noise = hash01(i * 7 + dayOfWeek);
-
-  // Occasional hot streaks: a handful of weeks light up near-max, mimicking a
-  // crunch or a burst of shipping.
   const hot = hash01(week * 31 + 7) > 0.82 ? 0.45 : 0;
 
   const base = wave * 0.55 + noise * 0.45 + hot + 0.2 - (isWeekend ? 0.24 : 0);
   const intensity = base * reveal;
 
-  if (intensity < 0.15) return 0;
-  if (intensity < 0.42) return 1;
-  if (intensity < 0.66) return 2;
-  if (intensity < 0.88) return 3;
+  if (intensity < 0.15) {
+    return 0;
+  }
+  if (intensity < 0.42) {
+    return 1;
+  }
+  if (intensity < 0.66) {
+    return 2;
+  }
+  if (intensity < 0.88) {
+    return 3;
+  }
   return 4;
 }
 
 // Draggable before/after grid: each cell is precomputed at both reveal
-// strengths, and a handle wipes the boundary between the public (left) and real
-// (right) versions. Drag it to reveal more or less.
+// strengths, and a handle wipes the boundary between public (left) and real (right).
 function PlaceholderGrid({ colors }: { colors: Palette }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
@@ -151,7 +152,9 @@ function PlaceholderGrid({ colors }: { colors: Palette }) {
 
   function setFromClientX(clientX: number) {
     const el = trackRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const rect = el.getBoundingClientRect();
     const fraction = (clientX - rect.left) / rect.width;
     setSplit(Math.min(1, Math.max(0, fraction)));
@@ -183,7 +186,9 @@ function PlaceholderGrid({ colors }: { colors: Palette }) {
           setFromClientX(e.clientX);
         }}
         onPointerMove={(e) => {
-          if (draggingRef.current) setFromClientX(e.clientX);
+          if (draggingRef.current) {
+            setFromClientX(e.clientX);
+          }
         }}
         onPointerUp={(e) => {
           draggingRef.current = false;
@@ -195,8 +200,12 @@ function PlaceholderGrid({ colors }: { colors: Palette }) {
           setDragging(false);
         }}
         onKeyDown={(e) => {
-          if (e.key === "ArrowLeft") nudge(-1);
-          if (e.key === "ArrowRight") nudge(1);
+          if (e.key === "ArrowLeft") {
+            nudge(-1);
+          }
+          if (e.key === "ArrowRight") {
+            nudge(1);
+          }
         }}
         className="relative cursor-ew-resize touch-none rounded-sm outline-none focus-visible:ring-1 focus-visible:ring-white/20"
       >
@@ -286,8 +295,7 @@ function CopyIcon() {
   );
 }
 
-// Copy control: sits top-right above the graph. Nudges with a tooltip after 5s,
-// then opens a Link/Markdown chooser on click.
+// Copy control: nudges with a tooltip after 5s, then opens a Link/Markdown chooser.
 function CopyMenu({ origin, username, theme }: { origin: string; username: string; theme: Theme }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<null | "link" | "markdown">(null);
@@ -306,9 +314,13 @@ function CopyMenu({ origin, username, theme }: { origin: string; username: strin
   }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
     const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
@@ -370,7 +382,7 @@ function CopyMenu({ origin, username, theme }: { origin: string; username: strin
 }
 
 // Header row (stats + copy) lives outside the graph's overflow scroller so the
-// copy popover isn't clipped. Sized to the graph width so copy sits at its right.
+// copy popover isn't clipped.
 function Result({
   data,
   searched,
@@ -411,8 +423,8 @@ function Result({
   );
 }
 
-// Loading placeholder that mirrors Result's layout — stats row, grid, legend at
-// the same width — so the graph doesn't jump when real data arrives.
+// Loading placeholder mirroring Result's layout so the graph doesn't jump when
+// real data arrives.
 function ResultSkeleton() {
   const width = PLACEHOLDER_COLUMNS * 14 - 3;
   const bar = "rounded bg-white/[0.06]";
@@ -474,17 +486,24 @@ export default function ContributionsApp() {
 
   function chooseTheme(next: Theme) {
     setTheme(next);
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined") {
+      return;
+    }
     const params = new URLSearchParams(window.location.search);
-    if (next.name === DEFAULT_THEME.name) params.delete("theme");
-    else params.set("theme", next.name);
+    if (next.name === DEFAULT_THEME.name) {
+      params.delete("theme");
+    } else {
+      params.set("theme", next.name);
+    }
     const query = params.toString();
     window.history.replaceState(null, "", query ? `?${query}` : window.location.pathname);
   }
 
   async function search(e: React.SyntheticEvent) {
     e.preventDefault();
-    if (!trimmed || invalid || loading) return;
+    if (!trimmed || invalid || loading) {
+      return;
+    }
     await reveal(trimmed);
   }
 
@@ -511,8 +530,7 @@ export default function ContributionsApp() {
     }
   }
 
-  // Deep link: /?u=<username>&theme=<theme> reveals on load, so results are
-  // shareable with their chosen theme.
+  // Deep link /?u=<username>&theme=<theme> reveals on load, so results are shareable.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setTheme(resolveTheme(params.get("theme")));
