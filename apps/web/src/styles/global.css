@@ -12,6 +12,9 @@
 html {
   background-color: var(--color-canvas);
   color-scheme: dark;
+  /* Gap between contribution cells. Shrinks on narrow screens so 53 fluid
+     columns fit without horizontal scroll, settling at 3px once there's room. */
+  --cell-gap: clamp(1px, 0.35vw, 3px);
 }
 
 body {

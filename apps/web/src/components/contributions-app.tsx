@@ -39,10 +39,10 @@ function Grid({ days, colors }: { days: Day[]; colors: Palette }) {
   const layout = useMemo(() => buildLayout(days), [days]);
 
   return (
-    <div className="inline-block">
+    <div className="w-full">
       <div
-        className="mb-1.5 grid font-mono text-[10px] text-neutral-600"
-        style={{ gridTemplateColumns: `repeat(${layout.columns}, 14px)` }}
+        className="mb-1.5 grid gap-[var(--cell-gap)] font-mono text-[10px] text-neutral-600"
+        style={{ gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))` }}
       >
         {layout.months.map((m) => (
           <span key={`${m.col}-${m.label}`} style={{ gridColumnStart: m.col + 1 }}>
@@ -51,17 +51,17 @@ function Grid({ days, colors }: { days: Day[]; colors: Palette }) {
         ))}
       </div>
       <div
-        className="grid gap-[3px]"
+        className="grid gap-[var(--cell-gap)]"
         style={{
-          gridTemplateRows: "repeat(7, 11px)",
-          gridTemplateColumns: `repeat(${layout.columns}, 11px)`,
+          gridTemplateRows: "repeat(7, auto)",
+          gridTemplateColumns: `repeat(${layout.columns}, minmax(0, 1fr))`,
         }}
       >
         {layout.cells.map((cell) => (
           <div
             key={cell.date}
             title={`${cell.count} contribution${cell.count === 1 ? "" : "s"} on ${cell.date}`}
-            className="cell-in h-[11px] w-[11px] rounded-[2px]"
+            className="cell-in aspect-square w-full rounded-[2px]"
             style={{
               gridRowStart: cell.row + 1,
               gridColumnStart: cell.col + 1,
@@ -165,7 +165,10 @@ function PlaceholderGrid({ colors }: { colors: Palette }) {
   }
 
   return (
-    <div className="inline-block select-none">
+    <div
+      className="mx-auto w-full max-w-full select-none"
+      style={{ maxWidth: PLACEHOLDER_COLUMNS * 14 - 3 }}
+    >
       <div className="mb-2 flex justify-between font-mono text-[10px] tracking-wide text-neutral-600">
         <span>What GitHub shows</span>
         <span className="text-accent/70">Your real graph</span>
@@ -210,11 +213,11 @@ function PlaceholderGrid({ colors }: { colors: Palette }) {
         className="relative cursor-ew-resize touch-none rounded-sm outline-none focus-visible:ring-1 focus-visible:ring-white/20"
       >
         <div
-          className="grid gap-[3px]"
+          className="grid gap-[var(--cell-gap)]"
           style={{
-            gridTemplateRows: "repeat(7, 11px)",
+            gridTemplateRows: "repeat(7, auto)",
             gridAutoFlow: "column",
-            gridAutoColumns: "11px",
+            gridAutoColumns: "minmax(0, 1fr)",
           }}
         >
           {levels.map((cell, i) => {
@@ -223,7 +226,7 @@ function PlaceholderGrid({ colors }: { colors: Palette }) {
             return (
               <div
                 key={i}
-                className="h-[11px] w-[11px] rounded-[2px] transition-[background-color] duration-150"
+                className="aspect-square w-full rounded-[2px] transition-[background-color] duration-150"
                 style={{ background: colors[level], opacity: level === 0 ? 0.4 : 0.9 }}
               />
             );
@@ -396,14 +399,14 @@ function Result({
   theme: Theme;
   colors: Palette;
 }) {
-  const width = useMemo(() => {
+  const maxWidth = useMemo(() => {
     const cols = buildLayout(data.days).columns;
     return cols > 0 ? cols * 14 - 3 : undefined;
   }, [data.days]);
 
   return (
     <div className="flex w-full min-w-0 flex-col items-center">
-      <div style={{ width }} className="min-w-0 max-w-full">
+      <div style={{ maxWidth }} className="mx-auto w-full min-w-0">
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
             <span className="font-mono text-xl font-medium tracking-tight text-white tabular-nums">
@@ -414,9 +417,7 @@ function Result({
           </div>
           <CopyMenu key={searched} origin={origin} username={searched} theme={theme} />
         </div>
-        <div className="min-w-0 max-w-full overflow-x-auto pb-1">
-          <Grid days={data.days} colors={colors} />
-        </div>
+        <Grid days={data.days} colors={colors} />
         <Legend colors={colors} />
       </div>
     </div>
@@ -426,38 +427,36 @@ function Result({
 // Loading placeholder mirroring Result's layout so the graph doesn't jump when
 // real data arrives.
 function ResultSkeleton() {
-  const width = PLACEHOLDER_COLUMNS * 14 - 3;
+  const maxWidth = PLACEHOLDER_COLUMNS * 14 - 3;
   const bar = "rounded bg-white/[0.06]";
-  const cell = "h-[11px] w-[11px] rounded-[2px] bg-white/[0.05]";
+  const cell = "aspect-square w-full rounded-[2px] bg-white/[0.05]";
 
   return (
     <div className="flex w-full min-w-0 flex-col items-center">
       <div
-        style={{ width }}
-        className="min-w-0 max-w-full animate-pulse motion-reduce:animate-none"
+        style={{ maxWidth }}
+        className="mx-auto w-full min-w-0 animate-pulse motion-reduce:animate-none"
       >
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className={`h-7 w-44 max-w-[60%] ${bar}`} />
           <div className={`h-[30px] w-[74px] shrink-0 ${bar}`} />
         </div>
-        <div className="min-w-0 max-w-full overflow-x-auto pb-1">
-          <div className="mb-1.5 flex gap-8">
-            {Array.from({ length: 7 }, (_, i) => (
-              <div key={i} className="h-2.5 w-6 rounded bg-white/[0.05]" />
-            ))}
-          </div>
-          <div
-            className="grid gap-[3px]"
-            style={{
-              gridTemplateRows: "repeat(7, 11px)",
-              gridAutoFlow: "column",
-              gridAutoColumns: "11px",
-            }}
-          >
-            {Array.from({ length: PLACEHOLDER_COLUMNS * 7 }, (_, i) => (
-              <div key={i} className={cell} />
-            ))}
-          </div>
+        <div className="mb-1.5 flex gap-8">
+          {Array.from({ length: 7 }, (_, i) => (
+            <div key={i} className="h-2.5 w-6 rounded bg-white/[0.05]" />
+          ))}
+        </div>
+        <div
+          className="grid gap-[var(--cell-gap)]"
+          style={{
+            gridTemplateRows: "repeat(7, auto)",
+            gridAutoFlow: "column",
+            gridAutoColumns: "minmax(0, 1fr)",
+          }}
+        >
+          {Array.from({ length: PLACEHOLDER_COLUMNS * 7 }, (_, i) => (
+            <div key={i} className={cell} />
+          ))}
         </div>
         <div className="mt-4 flex items-center gap-1.5">
           <div className={`h-2.5 w-7 ${bar}`} />
@@ -591,9 +590,7 @@ export default function ContributionsApp() {
             <p className="mb-6 font-mono text-sm text-neutral-600">
               Enter a username to reveal the real graph.
             </p>
-            <div className="min-w-0 max-w-full overflow-x-auto pb-1">
-              <PlaceholderGrid colors={colors} />
-            </div>
+            <PlaceholderGrid colors={colors} />
           </div>
         )}
 
