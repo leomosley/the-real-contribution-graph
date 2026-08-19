@@ -80,7 +80,13 @@ const ogImage = isProfile
     <header
       class="fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-5 py-4 sm:px-8"
     >
-      <img src="/favicon.svg" alt="" class="h-7 w-7 rounded-md opacity-90" />
+      <a
+        href="/"
+        aria-label="Home"
+        class="inline-flex rounded-md opacity-90 transition-opacity duration-200 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
+      >
+        <img src="/favicon.svg" alt="Home" class="h-7 w-7 rounded-md" />
+      </a>
       <a
         href={repo}
         target="_blank"
