@@ -1,25 +1,26 @@
 import type { APIRoute } from "astro";
 import { fetchContributions, isError } from "../lib/contributions";
 import { renderContributionsSvg } from "../lib/contributions-svg";
-import { resolveTheme } from "../lib/themes";
+import { resolveMode, resolveTheme } from "../lib/themes";
 import { limiter } from "../lib/limiter";
 
-// Embeddable badge: ![graph](https://<service>/<username>.svg?theme=<theme>)
+// Embeddable badge: ![graph](https://<service>/<username>.svg?theme=<theme>&mode=light)
 // Always the anonymous/real aggregate. Served as SVG for README embeds, so it
 // returns 200 even on error — the image must still render.
 export const GET: APIRoute = async ({ params, url, clientAddress }) => {
   const username = params.username ?? "";
   const theme = resolveTheme(url.searchParams.get("theme"));
+  const mode = resolveMode(url.searchParams.get("mode"));
 
   const gate = limiter.check(clientAddress ?? "unknown");
   if (!gate.ok) {
-    return svgResponse(renderContributionsSvg(username, { total: 0, days: [] }, theme), 60);
+    return svgResponse(renderContributionsSvg(username, { total: 0, days: [] }, theme, mode), 60);
   }
 
   const result = await fetchContributions(username);
   const svg = isError(result)
-    ? renderContributionsSvg(username, { total: 0, days: [] }, theme)
-    : renderContributionsSvg(username, result, theme);
+    ? renderContributionsSvg(username, { total: 0, days: [] }, theme, mode)
+    : renderContributionsSvg(username, result, theme, mode);
 
   return svgResponse(svg, 900);
 };

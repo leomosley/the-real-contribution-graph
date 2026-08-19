@@ -53,6 +53,29 @@ const ogImage = isProfile
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="theme-color" content="#0a0a0b" />
 
+    {/* Apply the saved/system colour scheme before first paint to avoid a flash. */}
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem("theme");
+          var mode =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia("(prefers-color-scheme: light)").matches
+                ? "light"
+                : "dark";
+          var el = document.documentElement;
+          el.classList.add(mode);
+          if (mode === "light") {
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute("content", "#ffffff");
+          }
+        } catch (e) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
     <meta property="og:title" content={title} />
@@ -82,11 +105,54 @@ const ogImage = isProfile
     >
       <img src="/favicon.svg" alt="" class="h-7 w-7 rounded-md opacity-90" />
       <a
-        href={repo}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-1.5 text-xs text-neutral-400 backdrop-blur-md transition-colors duration-200 hover:border-white/20 hover:text-neutral-200"
+        href="/"
+        aria-label="Home"
+        class="inline-flex rounded-md opacity-90 transition-opacity duration-200 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/40"
       >
+        <img src="/favicon.svg" alt="Home" class="h-7 w-7 rounded-md" />
+      </a>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          id="theme-toggle"
+          aria-label="Toggle light and dark mode"
+          class="flex h-8 w-8 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-neutral-400 backdrop-blur-md transition-colors duration-200 hover:border-white/20 hover:text-neutral-200 light:border-black/[0.08] light:bg-black/[0.03] light:text-neutral-500 light:hover:border-black/20 light:hover:text-neutral-800"
+        >
+          {/* Sun shown in dark mode (click → light); moon shown in light mode. */}
+          <svg
+            class="h-4 w-4 light:hidden"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="4"></circle>
+            <path
+              d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"
+            ></path>
+          </svg>
+          <svg
+            class="hidden h-4 w-4 light:block"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        <a
+          href={repo}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-1.5 text-xs text-neutral-400 backdrop-blur-md transition-colors duration-200 hover:border-white/20 hover:text-neutral-200 light:border-black/[0.08] light:bg-black/[0.03] light:text-neutral-500 light:hover:border-black/20 light:hover:text-neutral-800"
+        >
         <svg viewBox="0 0 24 24" fill="currentColor" class="h-3.5 w-3.5" aria-hidden="true">
           <path
             d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"
@@ -112,18 +178,19 @@ const ogImage = isProfile
           )
         }
       </a>
+      </div>
     </header>
 
     <main
       class="mx-auto flex min-h-screen max-w-4xl flex-col items-center px-5 pb-20 pt-28 sm:pt-36"
     >
       <h1
-        class="fade-up delay-1 text-center text-3xl font-light leading-tight tracking-tight text-white sm:text-5xl"
+        class="fade-up delay-1 text-center text-3xl font-light leading-tight tracking-tight text-white sm:text-5xl light:text-neutral-900"
       >
         See the work GitHub <span class="text-accent">hides</span>.
       </h1>
       <p
-        class="fade-up delay-2 mt-5 max-w-md text-center text-sm leading-relaxed text-neutral-500 sm:text-base"
+        class="fade-up delay-2 mt-5 max-w-md text-center text-sm leading-relaxed text-neutral-500 sm:text-base light:text-neutral-600"
       >
         GitHub drops your private-org contributions from your profile, but they still count.
       </p>
@@ -132,5 +199,23 @@ const ogImage = isProfile
         <ContributionsApp client:load />
       </div>
     </main>
+
+    <script is:inline>
+      (function () {
+        var btn = document.getElementById("theme-toggle");
+        if (!btn) return;
+        btn.addEventListener("click", function () {
+          var el = document.documentElement;
+          var light = el.classList.toggle("light");
+          el.classList.toggle("dark", !light);
+          try {
+            localStorage.setItem("theme", light ? "light" : "dark");
+          } catch (e) {}
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", light ? "#ffffff" : "#0a0a0b");
+          window.dispatchEvent(new CustomEvent("themechange", { detail: { light: light } }));
+        });
+      })();
+    </script>
   </body>
 </html>

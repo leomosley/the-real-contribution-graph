@@ -19,6 +19,22 @@ export const THEMES: readonly Theme[] = [
 
 export const DEFAULT_THEME = THEMES[0];
 
+// Light/dark surface mode. Governs the canvas, text and empty-cell colours the
+// graph sits on — independent of the ramp theme. Used by the site UI and the
+// embeddable SVG badge (?mode=light).
+export type Mode = "dark" | "light";
+export const DEFAULT_MODE: Mode = "dark";
+
+// Only "light" opts out of the dark default; anything else falls back to dark.
+export const resolveMode = (name: string | null | undefined): Mode =>
+  name === "light" ? "light" : "dark";
+
+// Empty-cell (level 0) colour per surface mode, mirroring GitHub's own graphs.
+export const EMPTY_CELL: Record<Mode, string> = {
+  dark: "#161b22",
+  light: "#ebedf0",
+};
+
 // Unknown/absent names fall back to the default theme.
 export const resolveTheme = (name: string | null | undefined): Theme =>
   THEMES.find((theme) => theme.name === name) ?? DEFAULT_THEME;
