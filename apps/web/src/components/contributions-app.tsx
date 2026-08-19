@@ -303,6 +303,43 @@ function CopyIcon() {
   );
 }
 
+function SunIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
 // Copy control: nudges with a tooltip after 5s, then opens a Link/Markdown chooser.
 function CopyMenu({ origin, username, theme }: { origin: string; username: string; theme: Theme }) {
   const [open, setOpen] = useState(false);
@@ -378,35 +415,21 @@ function CopyMenu({ origin, username, theme }: { origin: string; username: strin
           role="menu"
           className="absolute right-0 bottom-full z-20 mb-2 flex w-52 flex-col gap-0.5 rounded-lg border border-white/10 bg-neutral-900/95 p-1.5 shadow-xl shadow-black/50 backdrop-blur-md light:border-black/10 light:bg-white/95 light:shadow-black/10"
         >
-          <div className="px-1.5 pt-1 pb-1.5">
-            <div className="mb-1.5 font-mono text-[10px] tracking-wide text-neutral-500 light:text-neutral-500">
+          <div className="flex items-center justify-between px-2 py-1.5">
+            <span className="font-mono text-[10px] tracking-wide text-neutral-500 light:text-neutral-500">
               Embed appearance
-            </div>
-            <div
-              role="radiogroup"
-              aria-label="Embed appearance"
-              className="flex gap-1 rounded-md border border-white/10 p-0.5 light:border-black/10"
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={embedLight}
+              aria-label={embedLight ? "Light embed — switch to dark" : "Dark embed — switch to light"}
+              title={embedLight ? "Light embed" : "Dark embed"}
+              onClick={() => setEmbedLight((v) => !v)}
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-neutral-300 transition-colors hover:border-white/20 hover:text-white light:border-black/[0.08] light:bg-black/[0.03] light:text-neutral-600 light:hover:border-black/20 light:hover:text-neutral-900"
             >
-              {([false, true] as const).map((isLight) => {
-                const selected = embedLight === isLight;
-                return (
-                  <button
-                    key={String(isLight)}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => setEmbedLight(isLight)}
-                    className={`flex-1 rounded px-2 py-1 text-xs transition-colors ${
-                      selected
-                        ? "bg-white/[0.12] text-white light:bg-black/[0.08] light:text-neutral-900"
-                        : "text-neutral-400 hover:text-neutral-200 light:text-neutral-500 light:hover:text-neutral-800"
-                    }`}
-                  >
-                    {isLight ? "Light" : "Dark"}
-                  </button>
-                );
-              })}
-            </div>
+              {embedLight ? <MoonIcon /> : <SunIcon />}
+            </button>
           </div>
           <button
             role="menuitem"
