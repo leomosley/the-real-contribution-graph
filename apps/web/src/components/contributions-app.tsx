@@ -13,7 +13,10 @@ type Day = { date: string; level: number; count: number };
 type Contributions = { total: number; days: Day[] };
 type ApiError = { error: string; kind?: string };
 
-const EMPTY_CELL = "#1b1b1d";
+const EMPTY_CELL: Record<"dark" | "light", string> = {
+  dark: "#1b1b1d",
+  light: "#ebedf0",
+};
 
 const USERNAME_RE = /^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/;
 
@@ -237,9 +240,9 @@ function PlaceholderGrid({ colors }: { colors: Palette }) {
           className="pointer-events-none absolute top-0 bottom-0 -translate-x-1/2"
           style={{ left: `${handlePercent}%` }}
         >
-          <div className="mx-auto h-full w-px bg-white/40" />
+          <div className="mx-auto h-full w-px bg-white/40 light:bg-black/30" />
           <div
-            className={`absolute top-1/2 left-1/2 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-neutral-900/90 text-neutral-300 shadow-lg shadow-black/40 backdrop-blur-md transition-transform ${
+            className={`absolute top-1/2 left-1/2 flex h-6 w-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-neutral-900/90 text-neutral-300 shadow-lg shadow-black/40 backdrop-blur-md transition-transform light:border-black/15 light:bg-white/90 light:text-neutral-600 light:shadow-black/10 ${
               dragging ? "scale-110" : ""
             }`}
           >
@@ -269,7 +272,9 @@ function ThemePicker({ value, onChange }: { value: Theme; onChange: (theme: Them
             title={theme.label}
             onClick={() => onChange(theme)}
             className={`h-6 w-6 rounded-[4px] border transition-all ${
-              selected ? "scale-110 border-white/60" : "border-white/10 hover:border-white/30"
+              selected
+                ? "scale-110 border-white/60 light:border-black/50"
+                : "border-white/10 hover:border-white/30 light:border-black/15 light:hover:border-black/35"
             }`}
             style={{ background: theme.ramp[2] }}
           />
@@ -298,15 +303,61 @@ function CopyIcon() {
   );
 }
 
+function SunIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+    </svg>
+  );
+}
+
 // Copy control: nudges with a tooltip after 5s, then opens a Link/Markdown chooser.
 function CopyMenu({ origin, username, theme }: { origin: string; username: string; theme: Theme }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<null | "link" | "markdown">(null);
   const [showTip, setShowTip] = useState(false);
   const [hovered, setHovered] = useState(false);
+  const [embedLight, setEmbedLight] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const query = theme.name === DEFAULT_THEME.name ? "" : `?theme=${theme.name}`;
+  // Embed query carries the ramp theme and, optionally, a light surface.
+  const embedParams: string[] = [];
+  if (theme.name !== DEFAULT_THEME.name) {
+    embedParams.push(`theme=${theme.name}`);
+  }
+  if (embedLight) {
+    embedParams.push("mode=light");
+  }
+  const query = embedParams.length ? `?${embedParams.join("&")}` : "";
   const linkQuery = theme.name === DEFAULT_THEME.name ? "" : `&theme=${theme.name}`;
   const link = `${origin}/?u=${encodeURIComponent(username)}${linkQuery}`;
   const markdown = `![${username}'s real contributions](${origin}/${username}.svg${query})`;
@@ -347,14 +398,14 @@ function CopyMenu({ origin, username, theme }: { origin: string; username: strin
         onMouseLeave={() => setHovered(false)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 font-mono text-xs text-neutral-300 transition-colors hover:border-white/20 hover:text-white"
+        className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 font-mono text-xs text-neutral-300 transition-colors hover:border-white/20 hover:text-white light:border-black/[0.08] light:bg-black/[0.03] light:text-neutral-600 light:hover:border-black/20 light:hover:text-neutral-900"
       >
         <CopyIcon />
         {copied ? "Copied" : "Copy"}
       </button>
 
       {(showTip || hovered) && !open && !copied && (
-        <div className="fade-up absolute right-0 bottom-full z-10 mb-2 whitespace-nowrap rounded-md border border-white/10 bg-neutral-900/95 px-2.5 py-1.5 text-xs text-neutral-300 shadow-lg shadow-black/40 backdrop-blur-md">
+        <div className="fade-up absolute right-0 bottom-full z-10 mb-2 whitespace-nowrap rounded-md border border-white/10 bg-neutral-900/95 px-2.5 py-1.5 text-xs text-neutral-300 shadow-lg shadow-black/40 backdrop-blur-md light:border-black/10 light:bg-white/95 light:text-neutral-700 light:shadow-black/10">
           Copy to add to your README or share
         </div>
       )}
@@ -362,19 +413,35 @@ function CopyMenu({ origin, username, theme }: { origin: string; username: strin
       {open && (
         <div
           role="menu"
-          className="absolute right-0 bottom-full z-20 mb-2 flex w-52 flex-col gap-0.5 rounded-lg border border-white/10 bg-neutral-900/95 p-1.5 shadow-xl shadow-black/50 backdrop-blur-md"
+          className="absolute right-0 bottom-full z-20 mb-2 flex w-52 flex-col gap-0.5 rounded-lg border border-white/10 bg-neutral-900/95 p-1.5 shadow-xl shadow-black/50 backdrop-blur-md light:border-black/10 light:bg-white/95 light:shadow-black/10"
         >
+          <div className="flex items-center justify-between px-2 py-1.5">
+            <span className="font-mono text-[10px] tracking-wide text-neutral-500 light:text-neutral-500">
+              Embed appearance
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={embedLight}
+              aria-label={embedLight ? "Light embed — switch to dark" : "Dark embed — switch to light"}
+              title={embedLight ? "Light embed" : "Dark embed"}
+              onClick={() => setEmbedLight((v) => !v)}
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-neutral-300 transition-colors hover:border-white/20 hover:text-white light:border-black/[0.08] light:bg-black/[0.03] light:text-neutral-600 light:hover:border-black/20 light:hover:text-neutral-900"
+            >
+              {embedLight ? <MoonIcon /> : <SunIcon />}
+            </button>
+          </div>
           <button
             role="menuitem"
             onClick={() => copy("link", link)}
-            className="rounded-md px-3 py-2 text-left text-sm text-neutral-200 transition-colors hover:bg-white/[0.06]"
+            className="rounded-md px-3 py-2 text-left text-sm text-neutral-200 transition-colors hover:bg-white/[0.06] light:text-neutral-800 light:hover:bg-black/[0.05]"
           >
             Link
           </button>
           <button
             role="menuitem"
             onClick={() => copy("markdown", markdown)}
-            className="rounded-md px-3 py-2 text-left text-sm text-neutral-200 transition-colors hover:bg-white/[0.06]"
+            className="rounded-md px-3 py-2 text-left text-sm text-neutral-200 transition-colors hover:bg-white/[0.06] light:text-neutral-800 light:hover:bg-black/[0.05]"
           >
             Markdown
           </button>
@@ -409,7 +476,7 @@ function Result({
       <div style={{ maxWidth }} className="mx-auto w-full min-w-0">
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-            <span className="font-mono text-xl font-medium tracking-tight text-white tabular-nums">
+            <span className="font-mono text-xl font-medium tracking-tight text-white tabular-nums light:text-neutral-900">
               {data.total.toLocaleString()}
             </span>
             <span className="text-sm text-neutral-500">contributions this year</span>
@@ -428,8 +495,8 @@ function Result({
 // real data arrives.
 function ResultSkeleton() {
   const maxWidth = PLACEHOLDER_COLUMNS * 14 - 3;
-  const bar = "rounded bg-white/[0.06]";
-  const cell = "aspect-square w-full rounded-[2px] bg-white/[0.05]";
+  const bar = "rounded bg-white/[0.06] light:bg-black/[0.06]";
+  const cell = "aspect-square w-full rounded-[2px] bg-white/[0.05] light:bg-black/[0.05]";
 
   return (
     <div className="flex w-full min-w-0 flex-col items-center">
@@ -443,7 +510,7 @@ function ResultSkeleton() {
         </div>
         <div className="mb-1.5 flex gap-8">
           {Array.from({ length: 7 }, (_, i) => (
-            <div key={i} className="h-2.5 w-6 rounded bg-white/[0.05]" />
+            <div key={i} className="h-2.5 w-6 rounded bg-white/[0.05] light:bg-black/[0.05]" />
           ))}
         </div>
         <div
@@ -461,7 +528,7 @@ function ResultSkeleton() {
         <div className="mt-4 flex items-center gap-1.5">
           <div className={`h-2.5 w-7 ${bar}`} />
           {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="h-[11px] w-[11px] rounded-[2px] bg-white/[0.06]" />
+            <div key={i} className="h-[11px] w-[11px] rounded-[2px] bg-white/[0.06] light:bg-black/[0.06]" />
           ))}
           <div className={`h-2.5 w-8 ${bar}`} />
         </div>
@@ -477,11 +544,24 @@ export default function ContributionsApp() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
+  const [light, setLight] = useState(false);
+
+  // Mirror the site's light/dark surface (toggled in the Astro header) so the
+  // empty cell sits correctly on whichever canvas is active.
+  useEffect(() => {
+    const sync = () => setLight(document.documentElement.classList.contains("light"));
+    sync();
+    window.addEventListener("themechange", sync);
+    return () => window.removeEventListener("themechange", sync);
+  }, []);
 
   const trimmed = username.trim();
   const invalid = trimmed.length > 0 && !USERNAME_RE.test(trimmed);
   const origin = typeof window === "undefined" ? "" : window.location.origin;
-  const colors = useMemo(() => paletteFor(theme, EMPTY_CELL), [theme]);
+  const colors = useMemo(
+    () => paletteFor(theme, light ? EMPTY_CELL.light : EMPTY_CELL.dark),
+    [theme, light]
+  );
 
   function chooseTheme(next: Theme) {
     setTheme(next);
@@ -545,8 +625,10 @@ export default function ContributionsApp() {
     <div>
       <form
         onSubmit={search}
-        className={`mx-auto flex w-full max-w-md items-center rounded-full border bg-white/[0.03] p-1.5 backdrop-blur-md transition-colors ${
-          invalid ? "border-red-500/40" : "border-white/10 focus-within:border-white/25"
+        className={`mx-auto flex w-full max-w-md items-center rounded-full border bg-white/[0.03] p-1.5 backdrop-blur-md transition-colors light:bg-black/[0.02] ${
+          invalid
+            ? "border-red-500/40"
+            : "border-white/10 focus-within:border-white/25 light:border-black/10 light:focus-within:border-black/25"
         }`}
       >
         <span className="pl-4 font-mono text-sm text-neutral-600 select-none">@</span>
@@ -559,12 +641,12 @@ export default function ContributionsApp() {
           spellCheck={false}
           aria-label="GitHub username"
           aria-invalid={invalid}
-          className="min-w-0 flex-1 bg-transparent px-2 py-1.5 font-mono text-sm text-white outline-none placeholder:text-neutral-600"
+          className="min-w-0 flex-1 bg-transparent px-2 py-1.5 font-mono text-sm text-white outline-none placeholder:text-neutral-600 light:text-neutral-900"
         />
         <button
           type="submit"
           disabled={loading || !trimmed || invalid}
-          className="rounded-full bg-white px-5 py-1.5 text-sm font-medium text-neutral-950 transition-all duration-200 hover:shadow-[0_0_28px_rgba(57,211,83,0.35)] disabled:opacity-40 disabled:shadow-none"
+          className="rounded-full bg-white px-5 py-1.5 text-sm font-medium text-neutral-950 transition-all duration-200 hover:shadow-[0_0_28px_rgba(57,211,83,0.35)] disabled:opacity-40 disabled:shadow-none light:bg-neutral-900 light:text-white"
         >
           {loading ? "Revealing…" : "Reveal"}
         </button>

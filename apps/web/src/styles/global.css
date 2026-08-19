@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Dark is the default surface; `.light` on <html> opts into light mode. The
+   custom variant lets components add `light:` overrides on top of dark base
+   utilities without rewriting every class. */
+@custom-variant light (&:where(.light, .light *));
+
 @theme {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -15,6 +20,13 @@ html {
   /* Gap between contribution cells. Shrinks on narrow screens so 53 fluid
      columns fit without horizontal scroll, settling at 3px once there's room. */
   --cell-gap: clamp(1px, 0.35vw, 3px);
+}
+
+html.light {
+  --color-canvas: #ffffff;
+  --color-fg: #1f2328;
+  --color-accent: #1a7f37;
+  color-scheme: light;
 }
 
 body {
@@ -34,6 +46,11 @@ body {
   pointer-events: none;
   opacity: 0.035;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+html.light .grain {
+  opacity: 0.02;
+  mix-blend-mode: multiply;
 }
 
 @keyframes fade-up {
