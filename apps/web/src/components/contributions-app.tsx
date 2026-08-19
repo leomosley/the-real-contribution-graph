@@ -64,7 +64,7 @@ function Grid({ days, colors }: { days: Day[]; colors: Palette }) {
           <div
             key={cell.date}
             title={`${cell.count} contribution${cell.count === 1 ? "" : "s"} on ${cell.date}`}
-            className="cell-in aspect-square w-full rounded-[2px]"
+            className="contrib-cell cell-in aspect-square w-full rounded-[2px]"
             style={{
               gridRowStart: cell.row + 1,
               gridColumnStart: cell.col + 1,
@@ -83,7 +83,7 @@ function Legend({ colors }: { colors: Palette }) {
     <div className="mt-4 flex items-center gap-1.5 font-mono text-[10px] text-neutral-600">
       <span className="mr-0.5">Less</span>
       {colors.map((c, i) => (
-        <span key={i} className="h-[11px] w-[11px] rounded-[2px]" style={{ background: c }} />
+        <span key={i} className="contrib-cell h-[11px] w-[11px] rounded-[2px]" style={{ background: c }} />
       ))}
       <span className="ml-0.5">More</span>
     </div>
@@ -135,7 +135,7 @@ function placeholderLevel(i: number, reveal: number): number {
 
 // Draggable before/after grid: each cell is precomputed at both reveal
 // strengths, and a handle wipes the boundary between public (left) and real (right).
-function PlaceholderGrid({ colors }: { colors: Palette }) {
+function PlaceholderGrid({ colors, light }: { colors: Palette; light: boolean }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const draggingRef = useRef(false);
   const [split, setSplit] = useState(0.42);
@@ -229,8 +229,8 @@ function PlaceholderGrid({ colors }: { colors: Palette }) {
             return (
               <div
                 key={i}
-                className="aspect-square w-full rounded-[2px] transition-[background-color] duration-150"
-                style={{ background: colors[level], opacity: level === 0 ? 0.4 : 0.9 }}
+                className="contrib-cell aspect-square w-full rounded-[2px] transition-[background-color] duration-150"
+                style={{ background: colors[level], opacity: level === 0 ? (light ? 1 : 0.4) : 0.9 }}
               />
             );
           })}
@@ -672,7 +672,7 @@ export default function ContributionsApp() {
             <p className="mb-6 font-mono text-sm text-neutral-600">
               Enter a username to reveal the real graph.
             </p>
-            <PlaceholderGrid colors={colors} />
+            <PlaceholderGrid colors={colors} light={light} />
           </div>
         )}
 
